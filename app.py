@@ -7,7 +7,7 @@ import uuid
 import os
 
 app = Flask(__name__)
-
+app = Flask(__name__, static_folder='static', template_folder='templates')
 # InfluxDB Configuration
 INFLUXDB_URL = "https://us-east-1-1.aws.cloud2.influxdata.com"
 INFLUXDB_TOKEN = "nZ49M1MTGbHtRCrc2OJhx-kVIBWuwvereT-o1mcq2COz3urUNuUuIIMjysObK8oOEHn8352w7LKFyrX8PQpdsA=="
