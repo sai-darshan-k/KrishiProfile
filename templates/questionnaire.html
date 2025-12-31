@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiPro - Farmer Profile Update</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 40px 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 160px;
+            position: relative;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-center h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header-center p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-circle {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+
+        .company-logo {
+            width: 110%;
+            height: 110%;
+            object-fit: contain;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .form-content {
+            padding: 40px;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .section-subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2ecc71;
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-item:hover {
+            background: #f8f9fa;
+            border-color: #2ecc71;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .crop-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .crop-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .crop-card-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .remove-crop-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .add-crop-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .add-history-btn {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-prev { background: #95a5a6; color: white; }
+        .btn-next { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
+        .btn-submit { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+
+        .consent-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2ecc71;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Google Translate Styling */
+        .goog-te-gadget-simple {
+            background-color: #fff !important;
+            border: 2px solid #2ecc71 !important;
+            border-radius: 30px !important;
+            padding: 8px 16px !important;
+            font-size: 1em !important;
+            font-weight: 600 !important;
+            color: #2c3e50 !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+            transition: all 0.3s ease;
+        }
+
+        .goog-te-gadget-simple:hover {
+            background-color: #2ecc71 !important;
+            color: white !important;
+            transform: translateY(-2px);
+        }
+  /* Hide the Google Translate logo and branding */
+  .goog-te-gadget img,
+  .goog-te-banner-frame,
+  .skiptranslate > iframe.skiptranslate {
+    display: none !important;
+  }
+        .goog-te-gadget-simple img {
+            display: none !important;
+        }
+
+        .goog-te-gadget-simple .goog-te-menu-value span {
+            color: inherit !important;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .form-content { padding: 25px; }
+
+            .header {
+                flex-direction: column;
+                padding: 30px 20px;
+                text-align: center;
+            }
+
+            .header-right {
+                order: 0;
+                margin-bottom: 20px;
+            }
+
+            .header-center {
+                order: 1;
+            }
+
+            .header-left {
+                order: 2;
+                margin-top: 20px;
+                justify-content: center;
+            }
+
+            .header-center h1 {
+                font-size: 2.2em;
+            }
+
+            .logo-circle {
+                width: 90px;
+                height: 90px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-center h1 {
+                font-size: 1.9em;
+            }
+
+            .logo-circle {
+                width: 80px;
+                height: 80px;
+            }
+
+            .header {
+                padding: 35px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- Left: Translation Widget -->
+            <div class="header-left">
+                <div id="google_translate_element"></div>
+            </div>
+
+            <!-- Center: Title & Subtitle -->
+            <div class="header-center">
+                <h1>KrishiPro</h1>
+                <p>An Intelligent Farm and FPO Management Platform</p>
+            </div>
+
+            <!-- Right: Company Logo -->
+            <div class="header-right">
+                <div class="logo-circle">
+                    <img src="/static/AgrOn_Logo.png" alt="KrishiPro Logo" class="company-logo">
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+
+        <div class="form-content">
+            <div id="alertBox" class="alert"></div>
+            <div id="loadingBox" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px;">Submitting your data...</p>
+            </div>
+
+            <form id="farmerForm">
+                <!-- Section 1: Personal Information -->
+                <div class="form-section active" data-section="1">
+                    <h2 class="section-title">Personal Information</h2>
+                    <p class="section-subtitle">Please provide your basic details</p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Farmer's Full Name <span class="required">*</span></label>
+                            <input type="text" class="form-control" name="farmerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Father's / Spouse's Name</label>
+                            <input type="text" class="form-control" name="parentSpouseName">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Age <span class="required">*</span></label>
+                            <input type="number" class="form-control" name="age" min="18" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender <span class="required">*</span></label>
+                            <select class="form-control" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Aadhaar Number <span class="required">*</span></label>
+                            <input type="text" class="form-control" name="aadhaar" maxlength="12" pattern="[0-9]{12}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Mobile Number <span class="required">*</span></label>
+                            <input type="tel" class="form-control" name="mobile" pattern="[6-9][0-9]{9}" required placeholder="10-digit number">
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-next" onclick="nextSection()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 2: Location & Land -->
+                <div class="form-section" data-section="2">
+                    <h2 class="section-title">Location & Land Details</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Village / Town <span class="required">*</span></label>
+                            <input type="text" class="form-control" name="village" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Taluk / Tehsil <span class="required">*</span></label>
+                            <input type="text" class="form-control" name="taluk" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>District <span class="required">*</span></label>
+                            <input type="text" class="form-control" name="district" required>
+                        </div>
+                        <div class="form-group">
+                            <label>State <span class="required">*</span></label>
+                            <input type="text" class="form-control" name="state" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Total Farm Land Size <span class="required">*</span></label>
+                            <input type="number" class="form-control" name="landSize" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit <span class="required">*</span></label>
+                            <select class="form-control" name="landUnit" required>
+                                <option value="Acres">Acres</option>
+                                <option value="Hectares">Hectares</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Land Ownership Type <span class="required">*</span></label>
+                        <select class="form-control" name="ownershipType" required>
+                            <option value="">Select Type</option>
+                            <option value="Owned">Owned</option>
+                            <option value="Leased">Leased</option>
+                            <option value="Tenant">Tenant</option>
+                            <option value="Sharecropping">Sharecropping</option>
+                            <option value="Mixed">Mixed</option>
+                        </select>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-prev" onclick="prevSection()">← Previous</button>
+                        <button type="button" class="btn btn-next" onclick="nextSection()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 3: Schemes & Experience -->
+                <div class="form-section" data-section="3">
+                    <h2 class="section-title">Experience & Government Schemes</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Years of Farming Experience</label>
+                            <input type="number" class="form-control" name="experienceYears" min="0" max="60">
+                        </div>
+                        <div class="form-group">
+                            <label>Crop Insurance (PMFBY)?</label>
+                            <select class="form-control" name="hasInsurance">
+                                <option value="No">No</option>
+                                <option value="Yes">Yes</option>
+                                <option value="Applied">Applied</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Government Schemes Availing</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item"><input type="checkbox" name="schemes" value="PM-KISAN"><label>PM-KISAN</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="schemes" value="KCC"><label>Kisan Credit Card</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="schemes" value="Soil Health Card"><label>Soil Health Card</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="schemes" value="Seed/Fertilizer Subsidy"><label>Seed/Fertilizer Subsidy</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="schemes" value="None"><label>None</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="schemes" value="Others" id="schemeOthers"><label>Others</label></div>
+                        </div>
+                        <div class="form-group" id="otherSchemeInput" style="display:none; margin-top:15px;">
+                            <input type="text" class="form-control" name="otherSchemeName" placeholder="Specify scheme name">
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-prev" onclick="prevSection()">← Previous</button>
+                        <button type="button" class="btn btn-next" onclick="nextSection()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 4: Crops -->
+                <div class="form-section" data-section="4">
+                    <h2 class="section-title">Crop Details</h2>
+                    <p class="section-subtitle">Add all crops you are currently growing</p>
+
+                    <div id="cropsContainer"></div>
+
+                    <button type="button" class="add-crop-btn" onclick="addCrop()">+ Add Another Crop</button>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-prev" onclick="prevSection()">← Previous</button>
+                        <button type="button" class="btn btn-next" onclick="nextSection()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Section 5: Final -->
+                <div class="form-section" data-section="5">
+                    <h2 class="section-title">Final Details</h2>
+
+                    <div class="form-group">
+                        <label>Primary Market / Buyer</label>
+                        <select class="form-control" name="primaryMarket">
+                            <option value="">Select</option>
+                            <option value="Local Mandi">Local Mandi</option>
+                            <option value="APMC">APMC</option>
+                            <option value="Trader">Trader</option>
+                            <option value="Direct to Consumer">Direct to Consumer</option>
+                            <option value="Processor">Processor</option>
+                            <option value="Cooperative">Cooperative</option>
+                            <option value="Online">Online Platform</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Comments or Advice Needed?</label>
+                        <textarea class="form-control" name="additionalComments" placeholder="Any challenges, water issues, or advice you need..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Receive Advisory SMS/Calls?</label>
+                        <select class="form-control" name="advisoryConsent">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+
+                    <div class="consent-box">
+                        <label>
+                            <input type="checkbox" name="dataConsent" required>
+                            <span>I consent to my data being used for profile updates and agricultural advisories. <span class="required">*</span></span>
+                        </label>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-prev" onclick="prevSection()">← Previous</button>
+                        <button type="submit" class="btn btn-submit">Submit Profile</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+        let currentSection = 1;
+        const totalSections = 5;
+        let cropCount = 0;
+        let yieldHistoryCount = {};
+        let maps = {};
+
+        window.onload = () => {
+            addCrop();
+            updateProgress();
+            document.getElementById('schemeOthers').addEventListener('change', function() {
+                document.getElementById('otherSchemeInput').style.display = this.checked ? 'block' : 'none';
+            });
+        };
+
+        function updateProgress() {
+            const progress = (currentSection / totalSections) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextSection() {
+            if (!validateCurrentSection()) return;
+            if (currentSection < totalSections) {
+                document.querySelector(`.form-section[data-section="${currentSection}"]`).classList.remove('active');
+                currentSection++;
+                document.querySelector(`.form-section[data-section="${currentSection}"]`).classList.add('active');
+                updateProgress();
+                window.scrollTo(0, 0);
+                if (currentSection === 4) {
+                    for (let id in maps) {
+                        maps[id].invalidateSize();
+                    }
+                }
+            }
+        }
+
+        function prevSection() {
+            if (currentSection > 1) {
+                document.querySelector(`.form-section[data-section="${currentSection}"]`).classList.remove('active');
+                currentSection--;
+                document.querySelector(`.form-section[data-section="${currentSection}"]`).classList.add('active');
+                updateProgress();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function validateCurrentSection() {
+            const section = document.querySelector(`.form-section[data-section="${currentSection}"]`);
+            const required = section.querySelectorAll('input[required], select[required]');
+            let valid = true;
+            required.forEach(field => {
+                if (!field.checkValidity()) {
+                    field.reportValidity();
+                    valid = false;
+                }
+            });
+            return valid;
+        }
+
+        function initCropMap(cropId) {
+            let mapId = `map${cropId}`;
+            let coordId = `plotCoordinates${cropId}`;
+            let displayId = `coordinatesDisplay${cropId}`;
+            let map = L.map(mapId).setView([20.5937, 78.9629], 5);
+            L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '&copy; Google'
+            }).addTo(map);
+            L.Control.geocoder().addTo(map);
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    map.setView([position.coords.latitude, position.coords.longitude], 15);
+                }, function(error) {
+                    console.log(error);
+                });
+            }
+            let drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+            let drawControl = new L.Control.Draw({
+                draw: {
+                    polygon: true,
+                    marker: true,
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    circlemarker: false
+                },
+                edit: {
+                    featureGroup: drawnItems
+                }
+            });
+            map.addControl(drawControl);
+            function updateCoordinates() {
+                var geojson = drawnItems.toGeoJSON();
+                document.getElementById(coordId).value = JSON.stringify(geojson);
+                document.getElementById(displayId).innerText = JSON.stringify(geojson, null, 2);
+            }
+            map.on('draw:created', function(e) {
+                drawnItems.addLayer(e.layer);
+                updateCoordinates();
+            });
+            map.on('draw:edited', updateCoordinates);
+            map.on('draw:deleted', updateCoordinates);
+            maps[cropId] = map;
+        }
+
+        function addCrop() {
+            cropCount++;
+            const cropId = cropCount;
+
+            const cropHTML = `
+                <div class="crop-card" id="crop${cropId}">
+                    <div class="crop-card-header">
+                        <h3 class="crop-card-title">Crop #${cropId}</h3>
+                        ${cropId > 1 ? `<button type="button" class="remove-crop-btn" onclick="removeCrop(${cropId})">Remove</button>` : ''}
+                    </div>
+                    <div class="form-group">
+                        <label>Plot Location for this Crop <span class="required">*</span></label>
+                        <div id="map${cropId}" style="height: 400px;"></div>
+                        <input type="hidden" name="crops[${cropId}][plotCoordinates]" id="plotCoordinates${cropId}" required>
+                        <pre id="coordinatesDisplay${cropId}" style="margin-top: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; white-space: pre-wrap; overflow-x: auto;"></pre>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Crop Name <span class="required">*</span></label>
+                            <select class="form-control" name="crops[${cropId}][cropName]" onchange="toggleCustomCrop(this, ${cropId})" required>
+                                <option value="">Select Crop</option>
+                                <option value="Tomato">Tomato</option>
+                                <option value="Rice (Paddy)">Rice (Paddy)</option>
+                                <option value="Wheat">Wheat</option>
+                                <option value="Maize">Maize</option>
+                                <option value="Onion">Onion</option>
+                                <option value="Chili">Chili</option>
+                                <option value="Cotton">Cotton</option>
+                                <option value="Sugarcane">Sugarcane</option>
+                                <option value="Groundnut">Groundnut</option>
+                                <option value="Pulses">Pulses</option>
+                                <option value="Others">Others</option>
+                            </select>
+                            <input type="text" class="form-control" name="crops[${cropId}][customCropName]" 
+                                   placeholder="Enter crop name" style="display:none; margin-top:10px;" id="customCrop${cropId}">
+                        </div>
+                        <div class="form-group">
+                            <label>Variety (if known)</label>
+                            <input type="text" class="form-control" name="crops[${cropId}][cropVariety]">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Land Allocated <span class="required">*</span></label>
+                            <input type="number" step="0.01" class="form-control" name="crops[${cropId}][landAllocated]" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit <span class="required">*</span></label>
+                            <select class="form-control" name="crops[${cropId}][landAllocatedUnit]" required>
+                                <option value="Acres">Acres</option>
+                                <option value="Hectares">Hectares</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sowing Date <span class="required">*</span></label>
+                            <input type="date" class="form-control" name="crops[${cropId}][sowingDate]" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Harvest <span class="required">*</span></label>
+                            <input type="date" class="form-control" name="crops[${cropId}][harvestDate]" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Seed Source</label>
+                            <select class="form-control" name="crops[${cropId}][seedSource]">
+                                <option value="Own">Own Saved</option>
+                                <option value="Market">Local Market</option>
+                                <option value="Govt">Government</option>
+                                <option value="Company">Certified Company</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fertilizer Method <span class="required">*</span></label>
+                            <select class="form-control" name="crops[${cropId}][fertilizerMethod]" required>
+                                <option value="Fully Organic">Fully Organic</option>
+                                <option value="Mostly Organic">Mostly Organic</option>
+                                <option value="Transitioning">Transitioning</option>
+                                <option value="Mostly Chemical">Mostly Chemical</option>
+                                <option value="Fully Chemical">Fully Chemical</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Irrigation Type</label>
+                            <select class="form-control" name="crops[${cropId}][irrigationType]">
+                                <option value="Drip">Drip</option>
+                                <option value="Sprinkler">Sprinkler</option>
+                                <option value="Flood">Flood</option>
+                                <option value="Borewell">Borewell</option>
+                                <option value="Canal">Canal</option>
+                                <option value="Rain-fed">Rain-fed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Soil Type</label>
+                            <select class="form-control" name="crops[${cropId}][soilType]">
+                                <option value="Red Loamy">Red Loamy</option>
+                                <option value="Black Cotton">Black Cotton</option>
+                                <option value="Sandy">Sandy</option>
+                                <option value="Alluvial">Alluvial</option>
+                                <option value="Clay">Clay</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Daily Water Usage</label>
+                            <input type="text" class="form-control" name="crops[${cropId}][waterUsage]" placeholder="e.g., 850 L/day">
+                        </div>
+                        <div class="form-group">
+                            <label>Fertilizer Cost (₹)</label>
+                            <input type="number" class="form-control" name="crops[${cropId}][fertilizerCost]">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Workers Count</label>
+                            <input type="number" class="form-control" name="crops[${cropId}][workersCount]">
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Yield</label>
+                            <input type="number" step="0.01" class="form-control" name="crops[${cropId}][expectedYield]">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Yield Unit</label>
+                        <select class="form-control" name="crops[${cropId}][yieldUnit]">
+                            <option value="Tons">Tons</option>
+                            <option value="Quintals">Quintals</option>
+                            <option value="Kg">Kg</option>
+                            <option value="Bags">Bags</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Major Pest/Disease Issues</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item"><input type="checkbox" name="crops[${cropId}][pestIssues]" value="None"><label>None</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="crops[${cropId}][pestIssues]" value="Early/Late Blight"><label>Early/Late Blight</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="crops[${cropId}][pestIssues]" value="Leaf Curl Virus"><label>Leaf Curl Virus</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="crops[${cropId}][pestIssues]" value="Fruit Borer"><label>Fruit Borer</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="crops[${cropId}][pestIssues]" value="Aphids/Whitefly"><label>Aphids/Whitefly</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="crops[${cropId}][pestIssues]" value="Wilt/Root Rot"><label>Wilt/Root Rot</label></div>
+                            <div class="checkbox-item"><input type="checkbox" name="crops[${cropId}][pestIssues]" value="Others" id="pestOthers${cropId}"><label>Others / Don't Know</label></div>
+                        </div>
+
+                        <div id="pestOtherSection${cropId}" style="display:none; margin-top:15px; padding:15px; background:#f0f0f0; border-radius:8px;">
+                            <div class="form-group">
+                                <label>Description (optional)</label>
+                                <textarea class="form-control" name="crops[${cropId}][pestOtherText]" placeholder="Describe the symptoms you see..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Upload Photos of Affected Plant <span style="color:#e74c3c;font-size:0.9em">(Highly Recommended)</span></label>
+                                <input type="file" class="form-control" name="crops[${cropId}][pestPhotos]" accept="image/*" multiple>
+                                <small>Take clear photos of leaves, fruits, stems, or damage</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <h4 style="margin:20px 0 10px;">Yield History (Last 3 Seasons)</h4>
+                        <div id="yieldHistory${cropId}"></div>
+                        <button type="button" class="add-history-btn" onclick="addYieldHistory(${cropId})">+ Add Past Season</button>
+                    </div>
+                </div>`;
+
+            document.getElementById('cropsContainer').insertAdjacentHTML('beforeend', cropHTML);
+
+            document.getElementById(`pestOthers${cropId}`).addEventListener('change', function() {
+                document.getElementById(`pestOtherSection${cropId}`).style.display = this.checked ? 'block' : 'none';
+            });
+
+            initCropMap(cropId);
+        }
+
+        function toggleCustomCrop(select, cropId) {
+            const customInput = document.getElementById(`customCrop${cropId}`);
+            if (select.value === 'Others') {
+                customInput.style.display = 'block';
+                customInput.required = true;
+            } else {
+                customInput.style.display = 'none';
+                customInput.required = false;
+            }
+        }
+
+        function removeCrop(id) {
+            document.getElementById(`crop${id}`).remove();
+            delete maps[id];
+        }
+
+        function addYieldHistory(cropId) {
+            if (!yieldHistoryCount[cropId]) yieldHistoryCount[cropId] = 0;
+            if (yieldHistoryCount[cropId] >= 3) return alert('Maximum 3 seasons');
+            yieldHistoryCount[cropId]++;
+            const n = yieldHistoryCount[cropId];
+
+            const html = `
+                <div class="yield-history-item" style="background:white;padding:15px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;">
+                    <strong>Season ${n}</strong>
+                    <div class="form-row" style="margin-top:10px;">
+                        <div class="form-group">
+                            <label>Season/Year</label>
+                            <input type="text" class="form-control" name="crops[${cropId}][yieldHistory][${n}][seasonYear]" placeholder="e.g., Kharif 2024">
+                        </div>
+                        <div class="form-group">
+                            <label>Actual Yield</label>
+                            <input type="number" step="0.01" class="form-control" name="crops[${cropId}][yieldHistory][${n}][actualYield]">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sale Price per Unit (₹)</label>
+                        <input type="number" step="0.01" class="form-control" name="crops[${cropId}][yieldHistory][${n}][salePrice]">
+                    </div>
+                </div>`;
+            document.getElementById(`yieldHistory${cropId}`).insertAdjacentHTML('beforeend', html);
+        }
+
+        document.getElementById('farmerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!validateCurrentSection()) return;
+
+            const formData = new FormData(this);
+            const data = {
+                farmerName: formData.get('farmerName'),
+                parentSpouseName: formData.get('parentSpouseName'),
+                age: formData.get('age'),
+                gender: formData.get('gender'),
+                aadhaar: formData.get('aadhaar'),
+                mobile: formData.get('mobile').replace(/\D/g,'').slice(-10),
+                village: formData.get('village'),
+                taluk: formData.get('taluk'),
+                district: formData.get('district'),
+                state: formData.get('state'),
+                landSize: formData.get('landSize'),
+                landUnit: formData.get('landUnit'),
+                ownershipType: formData.get('ownershipType'),
+                experienceYears: formData.get('experienceYears'),
+                hasInsurance: formData.get('hasInsurance'),
+                schemes: [...formData.getAll('schemes'), formData.get('otherSchemeName')].filter(Boolean),
+                primaryMarket: formData.get('primaryMarket'),
+                additionalComments: formData.get('additionalComments'),
+                advisoryConsent: formData.get('advisoryConsent'),
+                crops: []
+            };
+
+            for (let i = 1; i <= cropCount; i++) {
+                if (!document.getElementById(`crop${i}`)) continue;
+                const base = `crops[${i}]`;
+                const crop = {
+                    plotCoordinates: formData.get(`${base}[plotCoordinates]`),
+                    cropName: formData.get(`${base}[cropName]`),
+                    customCropName: formData.get(`${base}[customCropName]`),
+                    cropVariety: formData.get(`${base}[cropVariety]`),
+                    landAllocated: formData.get(`${base}[landAllocated]`),
+                    landAllocatedUnit: formData.get(`${base}[landAllocatedUnit]`),
+                    sowingDate: formData.get(`${base}[sowingDate]`),
+                    harvestDate: formData.get(`${base}[harvestDate]`),
+                    seedSource: formData.get(`${base}[seedSource]`),
+                    fertilizerMethod: formData.get(`${base}[fertilizerMethod]`),
+                    irrigationType: formData.get(`${base}[irrigationType]`),
+                    soilType: formData.get(`${base}[soilType]`),
+                    waterUsage: formData.get(`${base}[waterUsage]`),
+                    fertilizerCost: formData.get(`${base}[fertilizerCost]`),
+                    workersCount: formData.get(`${base}[workersCount]`),
+                    expectedYield: formData.get(`${base}[expectedYield]`),
+                    yieldUnit: formData.get(`${base}[yieldUnit]`),
+                    pestIssues: formData.getAll(`${base}[pestIssues]`),
+                    pestOtherText: formData.get(`${base}[pestOtherText]`),
+                    yieldHistory: []
+                };
+
+                if (yieldHistoryCount[i]) {
+                    for (let j = 1; j <= yieldHistoryCount[i]; j++) {
+                        const hBase = `${base}[yieldHistory][${j}]`;
+                        if (formData.get(`${hBase}[seasonYear]`)) {
+                            crop.yieldHistory.push({
+                                seasonYear: formData.get(`${hBase}[seasonYear]`),
+                                actualYield: formData.get(`${hBase}[actualYield]`),
+                                salePrice: formData.get(`${hBase}[salePrice]`)
+                            });
+                        }
+                    }
+                }
+
+                data.crops.push(crop);
+            }
+
+            document.getElementById('loadingBox').style.display = 'block';
+
+            try {
+                const res = await fetch('/submit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                document.getElementById('loadingBox').style.display = 'none';
+                const alert = document.getElementById('alertBox');
+                alert.className = result.success ? 'alert alert-success' : 'alert alert-error';
+                alert.textContent = result.success ? '✓ Profile updated successfully!' : '✗ Error: ' + result.message;
+                alert.style.display = 'block';
+
+                if (result.success) setTimeout(() => location.reload(), 3000);
+            } catch (err) {
+                document.getElementById('loadingBox').style.display = 'none';
+                document.getElementById('alertBox').className = 'alert alert-error';
+                document.getElementById('alertBox').textContent = '✗ Network error';
+                document.getElementById('alertBox').style.display = 'block';
+            }
+        });
+    </script>
+
+    <!-- Google Translate Widget -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,mr,ta,te,kn,ml,gu,pa,bn,or,as,ur,sa',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false,
+                gaTrack: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
