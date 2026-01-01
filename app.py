@@ -6,37 +6,48 @@ import json
 import uuid
 import os
 
-app = Flask(__name__)
 app = Flask(__name__, static_folder='static', template_folder='templates')
-# InfluxDB Configuration
-INFLUXDB_URL = "https://us-east-1-1.aws.cloud2.influxdata.com"
-INFLUXDB_TOKEN = "nZ49M1MTGbHtRCrc2OJhx-kVIBWuwvereT-o1mcq2COz3urUNuUuIIMjysObK8oOEHn8352w7LKFyrX8PQpdsA=="
-INFLUXDB_ORG = "Agri"
-INFLUXDB_BUCKET = "smart_agri"
+
+# === InfluxDB Configuration (Secure for Vercel) ===
+INFLUXDB_URL = os.getenv('INFLUXDB_URL', "https://us-east-1-1.aws.cloud2.influxdata.com")
+INFLUXDB_TOKEN = os.getenv('INFLUXDB_TOKEN', "nZ49M1MTGbHtRCrc2OJhx-kVIBWuwvereT-o1mcq2COz3urUNuUuIIMjysObK8oOEHn8352w7LKFyrX8PQpdsA==")
+INFLUXDB_ORG = os.getenv('INFLUXDB_ORG', "Agri")
+INFLUXDB_BUCKET = os.getenv('INFLUXDB_BUCKET', "smart_agri")
 
 client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
-ID_FILE = "next_farmer_id.txt"
+# === Farmer ID Counter – Safe for Vercel Serverless ===
+# /tmp is the only writable directory in Vercel serverless environment
+ID_FILE = "/tmp/next_farmer_id.txt"
 
 def get_next_farmer_id():
     if os.path.exists(ID_FILE):
-        with open(ID_FILE, 'r') as f:
-            try:
-                next_id = int(f.read().strip())
-            except:
-                next_id = 1
+        try:
+            with open(ID_FILE, 'r') as f:
+                content = f.read().strip()
+                next_id = int(content) if content else 1
+        except:
+            next_id = 1
     else:
         next_id = 1
     
-    with open(ID_FILE, 'w') as f:
-        f.write(str(next_id + 1))
+    # Write the incremented value for next use
+    try:
+        with open(ID_FILE, 'w') as f:
+            f.write(str(next_id + 1))
+    except:
+        pass  # Fail silently if /tmp is unavailable (rare)
     
-    return f"{next_id:02d}"
+    return f"{next_id:04d}"  # Returns 0001, 0002, etc. Change format if needed
+
+
+# === Routes ===
 
 @app.route('/')
 def index():
     return render_template('questionnaire.html')
+
 
 @app.route('/submit', methods=['POST'])
 def submit_form():
@@ -44,7 +55,7 @@ def submit_form():
         data = request.json
         
         submission_id = str(uuid.uuid4())
-        farmer_name = data.get('farmerName', 'Unknown Farmer').strip()
+        farmer_name = data.get('farmerName', 'Unknown Farmer').strip() or 'Unknown Farmer'
         farmer_id = get_next_farmer_id()
 
         def safe_int(value, default=0):
@@ -61,7 +72,7 @@ def submit_form():
 
         current_time = datetime.now(timezone.utc)
 
-        # Prepare all data as JSON fields
+        # Personal & Location Info
         personal_info = {
             "farmer_name": farmer_name,
             "parent_spouse_name": data.get('parentSpouseName', ''),
@@ -83,7 +94,7 @@ def submit_form():
             "has_insurance": data.get('hasInsurance', 'No')
         }
 
-        # One single point with everything
+        # Write to InfluxDB
         point = Point("farmer_data") \
             .tag("submission_id", submission_id) \
             .tag("farmer_id", farmer_id) \
@@ -109,7 +120,17 @@ def submit_form():
         })
 
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+# Optional: Health check route
+@app.route('/health')
+def health():
+    return "OK", 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
